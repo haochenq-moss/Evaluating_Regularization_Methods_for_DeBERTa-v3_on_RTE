@@ -1,0 +1,13 @@
+# Reduced-compute tuning: 25% of internal training rows. Final evaluation remains full-sized.
+model_name: microsoft/deberta-v3-base
+dataset_name: nyu-mll/glue
+dataset_config: rte
+premise_column: sentence1
+hypothesis_column: sentence2
+max_len: 128
+train_fraction: 0.70
+validation_fraction: 0.15
+test_fraction: 0.15
+train_size: 436
+batch_size: 32
+final_seeds: [42, 123, 456]

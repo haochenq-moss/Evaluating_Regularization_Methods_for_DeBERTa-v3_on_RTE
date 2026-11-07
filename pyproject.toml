@@ -1,0 +1,36 @@
+[project]
+name = "regbench"
+version = "0.1.0"
+description = "Benchmark regularizers (label smoothing, mixup, R-Drop, NEFTune) for DeBERTa-v3-base on GLUE RTE"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.1",
+    "transformers>=4.40",
+    "datasets>=2.18",
+    "sentencepiece",
+    "tiktoken",
+    "protobuf",
+    "numpy",
+    "matplotlib",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+lora = ["peft>=0.18,<1"]
+
+[project.scripts]
+regbench = "regbench.cli:main"
+regbench-experiments = "regbench.run_experiments:main"
+regbench-report = "regbench.plot_results:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

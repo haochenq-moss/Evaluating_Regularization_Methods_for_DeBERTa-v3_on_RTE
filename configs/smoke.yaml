@@ -1,0 +1,27 @@
+# Pipeline smoke test (minutes on CPU): tiny subset, tiny grid.
+model_name: microsoft/deberta-v3-base
+dataset_name: nyu-mll/glue
+dataset_config: rte
+premise_column: sentence1
+hypothesis_column: sentence2
+max_len: 64
+train_fraction: 0.70
+validation_fraction: 0.15
+test_fraction: 0.15
+dev_eval_size: 64
+train_size: 64
+test_size: 64
+epochs: 1
+batch_size: 16
+eval_batch_size: 32
+num_workers: 0
+final_seeds: [0, 1]
+ece_bins: 10
+grid:
+  lrs: [2.0e-5]
+  baseline_epochs: [1]
+  augmentation: [0.25]
+  label_smoothing: [0.1]
+  mixup: [0.2]
+  rdrop: [1.0]
+  neftune: [5.0]
