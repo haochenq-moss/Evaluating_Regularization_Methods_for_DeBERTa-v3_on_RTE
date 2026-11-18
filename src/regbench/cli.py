@@ -26,7 +26,7 @@ def main(argv=None):
     p.add_argument("--config", default="configs/default.yaml")
     p.add_argument("--out", default="outputs")
     p.add_argument("--order", help="comma-separated stacking order for an alternative-order analysis, "
-                                   f"e.g. augmentation,rdrop,mixup,neftune,label_smoothing (from {REGULARIZERS})")
+                                   f"e.g. augmentation,rdrop,mixup,neftune,label_smoothing,llrd (from {REGULARIZERS})")
     p.add_argument("--set", nargs="*", metavar="KEY=JSON", help='override config, e.g. epochs=1 train_size=2000')
     a = p.parse_args(argv)
 

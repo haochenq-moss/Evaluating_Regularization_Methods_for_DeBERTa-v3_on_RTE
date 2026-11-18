@@ -1,6 +1,6 @@
 # DeBERTa-v3 GLUE RTE augmentation and regularization benchmark
 
-Reproducible PyTorch/Hugging Face experiments comparing a standard AdamW baseline with training-only FLAN-T5 hypothesis augmentation, label smoothing, embedding mixup, R-Drop and NEFTune, individually and in cumulative stacks.
+Reproducible PyTorch/Hugging Face experiments comparing a standard AdamW baseline with training-only FLAN-T5 hypothesis augmentation, label smoothing, layer-wise learning-rate decay (LLRD), embedding mixup, R-Drop and NEFTune, individually and in cumulative stacks.
 
 ## Repository layout
 
@@ -107,10 +107,14 @@ Slurm training defaults to `REGBENCH_DATALOADER_WORKERS=0` to avoid multiprocess
 - Model weights are promoted to FP32 before AdamW creates optimizer state; CUDA autocast uses BF16 when supported.
 - Baseline search tunes the three learning rates and epochs `{3, 4, 5}`; the selected epoch count is fixed for all later training.
 - Augmentation uses `google/flan-t5-large` with a deterministic 2-shot NLI instruction prompt. It generates one label-preserving paraphrase or minimal-edit label-flipping hypothesis per internal training row. A selected baseline checkpoint filters candidates at confidence `>= 0.85`. Ratios `{0.25, 0.50, 1.00}` are fractions of original training size; if fewer filtered pairs exist, the achieved ratio is recorded and capped by the available pool.
-- Individual method grids combine learning rates `{1e-5, 2e-5, 3e-5}` with three method parameters. Ties use lower internal validation loss.
-- The five methods are ranked by internal validation score. Stacks start with the top two methods, then add one method at a time through the five-method stack, tuning only the new method parameter and learning rate.
-- Final retraining includes the baseline, five individual winners, and four stacks (2–5 methods), each with seeds `[42, 123, 456]`.
+- Individual method grids combine learning rates `{1e-5, 2e-5, 3e-5}` with three method parameters. LLRD decay values `{0.8, 0.9, 0.95}` geometrically scale lower encoder layers; the classifier and top encoder layer use the configured base rate, and embeddings use one additional decay step. Ties use lower internal validation loss.
+- The six methods are ranked by internal validation score. Stacks start with the top two methods, then add one method at a time through the six-method stack, tuning only the new method parameter and learning rate.
+- Final retraining includes the baseline, six individual winners, and five stacks (2–6 methods), each with seeds `[42, 123, 456]`.
 - Metrics are accuracy, macro-F1 and 10-bin ECE; configs, per-epoch train/validation losses, predictions and metrics are saved. Plots include individual-vs-stack accuracy, calibration, reliability and loss curves. FLOPs are estimates (`6 × non-embedding parameters × processed tokens`); wall time is measured.
+
+### Experiment runtime estimate
+
+The expanded default grid has 145 training runs: 9 baseline candidates, 1 augmentation teacher, 54 individual candidates, 45 stack candidates and 36 final seed runs. Existing RTE metrics show median training times of about 6.0 seconds/epoch for individual runs, 14.7 seconds/epoch for stacks, 5.8 seconds/epoch for final runs, and 4.1 seconds/epoch for the augmentation teacher. Applying those measured medians to the baseline search (36 epochs total) and a selected duration of 3–5 epochs gives an estimated **64–103 minutes of GPU training time**. This excludes FLAN-T5 augmentation generation, model loading, validation, report generation and Slurm queue delays, so end-to-end elapsed time will be longer. The estimate uses historical run timings and is hardware-dependent; metrics record actual `train_seconds` for recalibration.
 
 The requested modules are `regbench.data_aug`, `regbench.models_regularization`, `regbench.train_eval`, `regbench.run_experiments` and `regbench.plot_results`.
 

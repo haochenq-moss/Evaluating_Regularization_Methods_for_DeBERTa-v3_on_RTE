@@ -38,6 +38,33 @@ def test_clean_loss_is_opt_in_hash_changes_and_no_weights(tmp_path):
     assert not list(tmp_path.glob("predictions*"))
 
 
+@pytest.mark.parametrize("weight_average", ["ema", "swa"])
+def test_weight_averaging_logs_epochs_without_saving_weights(tmp_path, weight_average):
+    data = Dataset.from_dict({"input_ids": [[1, 2], [3, 4], [5, 6], [7, 8]],
+                              "attention_mask": [[1, 1]] * 4, "labels": [0, 1, 0, 1]})
+
+    def builder(_):
+        config = DebertaV2Config(hidden_size=16, intermediate_size=32, num_hidden_layers=1,
+                                 num_attention_heads=4, vocab_size=32, num_labels=2)
+        return DebertaV2ForSequenceClassification(config)
+
+    cfg = Config(epochs=2, batch_size=2, eval_batch_size=2, num_workers=0)
+    spec = RunSpec({"rdrop": 0.1, "neftune": 15.0}, 1e-4, 42)
+    epoch_rows = []
+    metrics = run(
+        cfg, spec, tmp_path, splits={"train": data, "dev": data}, pad_id=0,
+        model_builder=builder, save_resume=False, weight_average=weight_average,
+        epoch_callback=epoch_rows.append,
+    )
+
+    assert len(epoch_rows) == 2
+    assert epoch_rows == metrics["history"]
+    assert all(row["weight_average"] == weight_average for row in epoch_rows)
+    assert all(row["epoch_train_seconds"] > 0 for row in epoch_rows)
+    assert metrics["dev"]["n"] == 4
+    assert not list(tmp_path.glob("*.pt*"))
+
+
 def test_selection_and_best_epoch():
     def values(acc, loss):
         return [{"dev": {"accuracy": acc, "loss": loss}}] * 3

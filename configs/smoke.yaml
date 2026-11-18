@@ -25,3 +25,4 @@ grid:
   mixup: [0.2]
   rdrop: [1.0]
   neftune: [5.0]
+  llrd: [0.9]

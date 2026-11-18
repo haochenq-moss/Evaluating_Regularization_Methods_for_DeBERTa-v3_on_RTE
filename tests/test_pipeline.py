@@ -12,14 +12,14 @@ from regbench.data import _grouped_split_indices
 from regbench.data_aug import append_filtered_augmentation
 from regbench.metrics import compute_metrics, ece
 from regbench.report import report
-from regbench.trainer import _dataloader_num_workers, run
+from regbench.trainer import _dataloader_num_workers, _optimizer_parameter_groups, run
 
 
 def fake_runner(cfg, spec, run_dir, final=False):
     # Deterministic fake score to verify search ordering and parameter retention.
     base = {
         "rdrop": .025, "mixup": .020, "neftune": .015,
-        "label_smoothing": .010, "augmentation": .005,
+        "label_smoothing": .010, "llrd": .007, "augmentation": .005,
     }
     acc = .80 + sum(base[k] for k in spec.reg) + (0.001 if spec.lr == 2e-5 else 0) \
         + 0.0001 * sum(spec.reg.values()) * 0
@@ -43,15 +43,15 @@ def test_search_and_stack(tmp_path):
     cfg = Config()
     search.baseline(cfg, tmp_path, runner=fake_runner, log=lambda *_: None)
     s = search.individual(cfg, tmp_path, runner=fake_runner, log=lambda *_: None)
-    assert s["ranking"] == ["rdrop", "mixup", "neftune", "label_smoothing", "augmentation"]
-    assert sum(len(s["methods"][method]["runs"]) for method in s["ranking"]) == 45
+    assert s["ranking"] == ["rdrop", "mixup", "neftune", "label_smoothing", "llrd", "augmentation"]
+    assert sum(len(s["methods"][method]["runs"]) for method in s["ranking"]) == 54
     assert len(s["baseline_epoch_search"]["runs"]) == 9
     res = search.stack(cfg, tmp_path, runner=fake_runner, log=lambda *_: None)
     regs = [set(st["reg"]) for st in res["stages"]]
     assert regs[0] == {"rdrop", "mixup"} and regs[-1] == set(s["ranking"])
     # earlier params remain fixed
     assert res["stages"][1]["reg"]["rdrop"] == res["stages"][0]["reg"]["rdrop"]
-    alt_order = ["neftune", "rdrop", "mixup", "label_smoothing", "augmentation"]
+    alt_order = ["neftune", "rdrop", "mixup", "label_smoothing", "llrd", "augmentation"]
     alt = search.stack(cfg, tmp_path, alt_order, runner=fake_runner,
                        log=lambda *_: None)
     assert alt["tag"] != "ranked"
@@ -63,8 +63,8 @@ def test_search_and_stack(tmp_path):
 
     budget_cfg = Config(train_size=436, dev_eval_size=2, test_size=1, final_seeds=[42, 123, 456])
     out = search.final(budget_cfg, tmp_path, runner=final_runner, log=lambda *_: None)
-    assert len(out) == 10 and all(len(v) == 3 for v in out.values())
-    assert len(final_data_sizes) == 30
+    assert len(out) == 12 and all(len(v) == 3 for v in out.values())
+    assert len(final_data_sizes) == 36
     assert set(final_data_sizes) == {(None, None, None)}
 
 
@@ -88,6 +88,32 @@ def test_dataloader_worker_override(monkeypatch):
     monkeypatch.setenv("REGBENCH_DATALOADER_WORKERS", "-1")
     with pytest.raises(ValueError, match="non-negative"):
         _dataloader_num_workers(cfg)
+
+
+def test_llrd_scales_encoder_and_embedding_learning_rates():
+    class LayeredModel(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.deberta = nn.Module()
+            self.deberta.embeddings = nn.Embedding(8, 4)
+            self.deberta.encoder = nn.Module()
+            self.deberta.encoder.layer = nn.ModuleList([nn.Linear(4, 4), nn.Linear(4, 4)])
+            self.classifier = nn.Linear(4, 2)
+
+    model = LayeredModel()
+    groups = _optimizer_parameter_groups(model, 1e-3, 0.01, {"llrd": 0.5})
+    rates = {
+        name: group["lr"]
+        for group in groups
+        for parameter in group["params"]
+        for name, candidate in model.named_parameters()
+        if parameter is candidate
+    }
+    assert rates["deberta.embeddings.weight"] == pytest.approx(2.5e-4)
+    assert rates["deberta.encoder.layer.0.weight"] == pytest.approx(5e-4)
+    assert rates["deberta.encoder.layer.1.weight"] == pytest.approx(1e-3)
+    assert rates["classifier.weight"] == pytest.approx(1e-3)
+    assert rates["classifier.bias"] == pytest.approx(1e-3)
 
 
 def test_grouped_stratified_70_15_15_split_keeps_duplicate_pairs_together():

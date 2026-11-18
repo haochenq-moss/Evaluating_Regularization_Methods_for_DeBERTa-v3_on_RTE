@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 
 # Canonical order is only used for naming; ranking decides the stacking order.
-REGULARIZERS = ("augmentation", "label_smoothing", "mixup", "rdrop", "neftune")
+REGULARIZERS = ("augmentation", "label_smoothing", "llrd", "mixup", "rdrop", "neftune")
 
 
 @dataclass
@@ -22,6 +22,7 @@ class Grid:
     mixup: list[float] = field(default_factory=lambda: [0.1, 0.2, 0.4])
     rdrop: list[float] = field(default_factory=lambda: [0.5, 1.0, 4.0])
     neftune: list[float] = field(default_factory=lambda: [5.0, 10.0, 15.0])
+    llrd: list[float] = field(default_factory=lambda: [0.8, 0.9, 0.95])
 
 
 @dataclass

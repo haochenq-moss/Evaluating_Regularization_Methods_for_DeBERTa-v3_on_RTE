@@ -6,8 +6,10 @@ import hashlib
 import os
 import pickle
 import random
+import re
 import time
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
 
 import numpy as np
@@ -78,15 +80,56 @@ def build_model(cfg: Config):
     return AutoModelForSequenceClassification.from_pretrained(cfg.model_name, num_labels=NUM_LABELS)
 
 
+def _optimizer_parameter_groups(model, lr: float, weight_decay: float, reg: dict[str, float]):
+    decay = float(reg.get("llrd", 1.0))
+    if not 0.0 < decay <= 1.0:
+        raise ValueError("llrd decay must be greater than 0 and at most 1")
+
+    parameters = list(model.named_parameters())
+    layer_indices = [
+        int(match.group(1))
+        for name, _ in parameters
+        if (match := re.search(r"(?:^|\.)encoder\.layer\.(\d+)\.", name))
+    ]
+    layer_count = max(layer_indices, default=-1) + 1
+    no_decay = ("bias", "LayerNorm.weight", "layernorm", "LayerNorm.bias")
+    grouped = {}
+    for name, parameter in parameters:
+        layer_match = re.search(r"(?:^|\.)encoder\.layer\.(\d+)\.", name)
+        if layer_match:
+            lr_scale = decay ** (layer_count - 1 - int(layer_match.group(1)))
+        elif re.search(r"(?:^|\.)embeddings\.", name):
+            lr_scale = decay ** layer_count
+        else:
+            lr_scale = 1.0
+        decay_value = 0.0 if any(key in name for key in no_decay) else weight_decay
+        key = (lr * lr_scale, decay_value)
+        grouped.setdefault(key, []).append(parameter)
+    return [
+        {"params": params, "lr": group_lr, "weight_decay": group_decay}
+        for (group_lr, group_decay), params in grouped.items()
+    ]
+
+
 def run(cfg: Config, spec: RunSpec, run_dir: Path, final: bool = False, splits=None,
         model_builder=None, pad_id: int | None = None, record_train_accuracy: bool = False,
-        save_resume: bool = True, record_train_clean_loss: bool = False) -> dict:
+    save_resume: bool = True, record_train_clean_loss: bool = False,
+    weight_average: str | None = None, ema_decay: float = 0.99,
+    epoch_callback: Callable[[dict], None] | None = None) -> dict:
     """Train + evaluate. Idempotent: finished runs are returned from metrics.json, interrupted
     runs resume from the last epoch checkpoint when save_resume is enabled."""
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
+    if weight_average not in (None, "ema", "swa"):
+        raise ValueError("weight_average must be None, 'ema', or 'swa'")
+    if not 0.0 < ema_decay < 1.0:
+        raise ValueError("ema_decay must be between 0 and 1")
     metrics_path, resume_path = run_dir / "metrics.json", run_dir / "resume.pt"
     chash = config_hash(cfg, spec)
+    if weight_average is not None:
+        chash = hashlib.sha1(
+            f"{chash}:{weight_average}:{ema_decay if weight_average == 'ema' else ''}".encode()
+        ).hexdigest()[:12]
     if record_train_accuracy:
         chash = hashlib.sha1(f"{chash}:record_train_accuracy".encode()).hexdigest()[:12]
     if record_train_clean_loss:
@@ -124,14 +167,13 @@ def run(cfg: Config, spec: RunSpec, run_dir: Path, final: bool = False, splits=N
     # Autocast still accelerates forward/backward without half-precision optimizer state.
     model = (model_builder or build_model)(cfg).to(device=dev, dtype=torch.float32)
     n_nonemb = non_embedding_params(model)
-    no_decay = ("bias", "LayerNorm.weight", "layernorm", "LayerNorm.bias")
-    groups = [
-        {"params": [p for n, p in model.named_parameters() if not any(k in n for k in no_decay)],
-         "weight_decay": cfg.weight_decay},
-        {"params": [p for n, p in model.named_parameters() if any(k in n for k in no_decay)],
-         "weight_decay": 0.0},
-    ]
+    groups = _optimizer_parameter_groups(model, spec.lr, cfg.weight_decay, spec.reg)
     opt = torch.optim.AdamW(groups, lr=spec.lr)
+    average_parameters = {
+        name: parameter.detach().clone()
+        for name, parameter in model.named_parameters() if parameter.requires_grad
+    } if weight_average == "ema" else {}
+    swa_count = 0
     steps_per_epoch = len(splits["train"]) // cfg.batch_size
     total = steps_per_epoch * cfg.epochs
     sched = get_linear_schedule_with_warmup(opt, int(cfg.warmup_ratio * total), total)
@@ -175,16 +217,56 @@ def run(cfg: Config, spec: RunSpec, run_dir: Path, final: bool = False, splits=N
                 raise FloatingPointError(f"Non-finite gradient norm at epoch {epoch + 1}, step {step}.")
             opt.step()
             sched.step()
+            if weight_average == "ema":
+                for name, parameter in model.named_parameters():
+                    if parameter.requires_grad:
+                        average_parameters[name].mul_(ema_decay).add_(
+                            parameter.detach(), alpha=1.0 - ema_decay
+                        )
             losses.append(loss.item())
             tokens += int(b["attention_mask"].sum()) * passes
         if dev.type == "cuda":
             torch.cuda.synchronize()
         state["train_seconds"] += time.time() - t0
         state["train_flops"] += 6.0 * n_nonemb * tokens  # fwd+bwd ~ 6*N*tokens (estimate)
-        lg, y, _ = predict(model, splits["dev"], collate, cfg, dev, amp)
-        m = compute_metrics(lg, y, cfg.ece_bins)
+        if weight_average == "swa":
+            swa_count += 1
+            if not average_parameters:
+                average_parameters = {
+                    name: parameter.detach().clone()
+                    for name, parameter in model.named_parameters() if parameter.requires_grad
+                }
+            else:
+                for name, parameter in model.named_parameters():
+                    if parameter.requires_grad:
+                        average_parameters[name].add_(parameter.detach())
+        original_parameters = {}
+        if weight_average is not None and average_parameters:
+            original_parameters = {
+                name: parameter.detach().clone()
+                for name, parameter in model.named_parameters() if parameter.requires_grad
+            }
+            with torch.no_grad():
+                for name, parameter in model.named_parameters():
+                    if parameter.requires_grad:
+                        averaged = average_parameters[name]
+                        if weight_average == "swa":
+                            averaged = averaged / swa_count
+                        parameter.copy_(averaged)
+        try:
+            lg, y, _ = predict(model, splits["dev"], collate, cfg, dev, amp)
+            m = compute_metrics(lg, y, cfg.ece_bins)
+        finally:
+            if original_parameters:
+                with torch.no_grad():
+                    for name, parameter in model.named_parameters():
+                        if parameter.requires_grad:
+                            parameter.copy_(original_parameters[name])
         entry = {"epoch": epoch + 1, "train_loss": float(np.mean(losses)),
+                 "epoch_train_seconds": time.time() - t0,
                  **{f"dev_{k}": v for k, v in m.items()}}
+        if weight_average is not None:
+            entry["weight_average"] = weight_average
         if record_train_accuracy or record_train_clean_loss:
             train_logits, train_labels, _ = predict(model, splits["train"], collate, cfg, dev, amp)
             clean_train = compute_metrics(train_logits, train_labels, cfg.ece_bins)
@@ -194,6 +276,8 @@ def run(cfg: Config, spec: RunSpec, run_dir: Path, final: bool = False, splits=N
                 entry["train_clean_loss"] = clean_train["loss"]
         state["history"].append(entry)
         state["epoch"] = epoch + 1
+        if epoch_callback is not None:
+            epoch_callback(dict(entry))
         if save_resume:
             temporary_resume = resume_path.with_suffix(resume_path.suffix + ".tmp")
             try:
@@ -214,8 +298,26 @@ def run(cfg: Config, spec: RunSpec, run_dir: Path, final: bool = False, splits=N
               "train_flops_est": state["train_flops"]}
     if "augmentation_info" in splits:
         result["augmentation_info"] = splits["augmentation_info"]
+    original_parameters = {}
+    if weight_average is not None and average_parameters:
+        original_parameters = {
+            name: parameter.detach().clone()
+            for name, parameter in model.named_parameters() if parameter.requires_grad
+        }
+        with torch.no_grad():
+            for name, parameter in model.named_parameters():
+                if parameter.requires_grad:
+                    averaged = average_parameters[name]
+                    if weight_average == "swa":
+                        averaged = averaged / swa_count
+                    parameter.copy_(averaged)
     lg, y, dev_tokens = predict(model, splits["dev"], collate, cfg, dev, amp)
     result["dev"] = compute_metrics(lg, y, cfg.ece_bins)
+    if original_parameters:
+        with torch.no_grad():
+            for name, parameter in model.named_parameters():
+                if parameter.requires_grad:
+                    parameter.copy_(original_parameters[name])
     result["infer_flops_per_dev_est"] = 2.0 * n_nonemb * dev_tokens
     if final:
         for name in ("dev", "test"):
