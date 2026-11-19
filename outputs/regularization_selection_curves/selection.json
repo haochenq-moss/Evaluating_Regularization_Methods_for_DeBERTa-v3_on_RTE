@@ -1,0 +1,278 @@
+{
+  "rule": "highest mean final development accuracy; tie lower mean development loss; then lower parameter value",
+  "combination_inclusion_rule": "include only when mean paired development-accuracy gain is positive and at least 4 of 7 seeds beat baseline",
+  "selected_parameters": {
+    "augmentation": 0.5,
+    "label_smoothing": 0.1,
+    "mixup": 0.2,
+    "neftune": 15.0,
+    "rdrop": 0.1,
+    "llrd": 0.8
+  },
+  "optimized_parameters": {
+    "label_smoothing": 0.1,
+    "mixup": 0.2,
+    "rdrop": 0.1,
+    "llrd": 0.8
+  },
+  "included_methods": [
+    "label_smoothing",
+    "mixup",
+    "rdrop",
+    "llrd"
+  ],
+  "excluded_methods": [
+    "augmentation",
+    "neftune"
+  ],
+  "inclusion_decisions": {
+    "augmentation": {
+      "mean_paired_gain_pp": -0.19098548510313293,
+      "seeds_better_than_baseline": 3,
+      "included": false
+    },
+    "label_smoothing": {
+      "mean_paired_gain_pp": 0.4201680672268908,
+      "seeds_better_than_baseline": 4,
+      "included": true
+    },
+    "mixup": {
+      "mean_paired_gain_pp": 0.3437738731856377,
+      "seeds_better_than_baseline": 4,
+      "included": true
+    },
+    "neftune": {
+      "mean_paired_gain_pp": 0.19098548510312977,
+      "seeds_better_than_baseline": 3,
+      "included": false
+    },
+    "rdrop": {
+      "mean_paired_gain_pp": 1.031321619556913,
+      "seeds_better_than_baseline": 5,
+      "included": true
+    },
+    "llrd": {
+      "mean_paired_gain_pp": 1.1841100076394193,
+      "seeds_better_than_baseline": 5,
+      "included": true
+    }
+  },
+  "candidates": {
+    "augmentation": [
+      {
+        "method": "augmentation",
+        "setting": "ratio 0.25",
+        "reg": {
+          "augmentation": 0.25
+        },
+        "value": 0.25,
+        "mean_dev_accuracy": 0.8311688311688312,
+        "mean_dev_loss": 1.1644575845654626
+      },
+      {
+        "method": "augmentation",
+        "setting": "ratio 0.5",
+        "reg": {
+          "augmentation": 0.5
+        },
+        "value": 0.5,
+        "mean_dev_accuracy": 0.8399541634835753,
+        "mean_dev_loss": 1.1712672955413979,
+        "mean_paired_gain_pp": -0.19098548510313293,
+        "seeds_better_than_baseline": 3,
+        "included": false,
+        "included_in_optimized_combination": false
+      },
+      {
+        "method": "augmentation",
+        "setting": "ratio 1",
+        "reg": {
+          "augmentation": 1.0
+        },
+        "value": 1.0,
+        "mean_dev_accuracy": 0.8365164247517188,
+        "mean_dev_loss": 1.1544580772944102
+      }
+    ],
+    "label_smoothing": [
+      {
+        "method": "label_smoothing",
+        "setting": "epsilon 0.05",
+        "reg": {
+          "label_smoothing": 0.05
+        },
+        "value": 0.05,
+        "mean_dev_accuracy": 0.8456837280366691,
+        "mean_dev_loss": 0.5227983550987993
+      },
+      {
+        "method": "label_smoothing",
+        "setting": "epsilon 0.1",
+        "reg": {
+          "label_smoothing": 0.1
+        },
+        "value": 0.1,
+        "mean_dev_accuracy": 0.8460656990068754,
+        "mean_dev_loss": 0.4543972408089373,
+        "mean_paired_gain_pp": 0.4201680672268908,
+        "seeds_better_than_baseline": 4,
+        "included": true,
+        "included_in_optimized_combination": true
+      },
+      {
+        "method": "label_smoothing",
+        "setting": "epsilon 0.15",
+        "reg": {
+          "label_smoothing": 0.15
+        },
+        "value": 0.15,
+        "mean_dev_accuracy": 0.8430099312452253,
+        "mean_dev_loss": 0.4223302562801458
+      }
+    ],
+    "mixup": [
+      {
+        "method": "mixup",
+        "setting": "alpha 0.1",
+        "reg": {
+          "mixup": 0.1
+        },
+        "value": 0.1,
+        "mean_dev_accuracy": 0.8388082505729565,
+        "mean_dev_loss": 0.6351134710400906
+      },
+      {
+        "method": "mixup",
+        "setting": "alpha 0.2",
+        "reg": {
+          "mixup": 0.2
+        },
+        "value": 0.2,
+        "mean_dev_accuracy": 0.845301757066463,
+        "mean_dev_loss": 0.5250093292441523,
+        "mean_paired_gain_pp": 0.3437738731856377,
+        "seeds_better_than_baseline": 4,
+        "included": true,
+        "included_in_optimized_combination": true
+      },
+      {
+        "method": "mixup",
+        "setting": "alpha 0.4",
+        "reg": {
+          "mixup": 0.4
+        },
+        "value": 0.4,
+        "mean_dev_accuracy": 0.8391902215431627,
+        "mean_dev_loss": 0.4470840052862898
+      }
+    ],
+    "neftune": [
+      {
+        "method": "neftune",
+        "setting": "alpha 5",
+        "reg": {
+          "neftune": 5.0
+        },
+        "value": 5.0,
+        "mean_dev_accuracy": 0.8349885408708939,
+        "mean_dev_loss": 1.0973616748140387
+      },
+      {
+        "method": "neftune",
+        "setting": "alpha 10",
+        "reg": {
+          "neftune": 10.0
+        },
+        "value": 10.0,
+        "mean_dev_accuracy": 0.8300229182582124,
+        "mean_dev_loss": 1.1166206743794624
+      },
+      {
+        "method": "neftune",
+        "setting": "alpha 15",
+        "reg": {
+          "neftune": 15.0
+        },
+        "value": 15.0,
+        "mean_dev_accuracy": 0.8437738731856379,
+        "mean_dev_loss": 1.041864930328262,
+        "mean_paired_gain_pp": 0.19098548510312977,
+        "seeds_better_than_baseline": 3,
+        "included": false,
+        "included_in_optimized_combination": false
+      }
+    ],
+    "rdrop": [
+      {
+        "method": "rdrop",
+        "setting": "coefficient 0.1",
+        "reg": {
+          "rdrop": 0.1
+        },
+        "value": 0.1,
+        "mean_dev_accuracy": 0.8521772345301758,
+        "mean_dev_loss": 1.0046691642714742,
+        "mean_paired_gain_pp": 1.031321619556913,
+        "seeds_better_than_baseline": 5,
+        "included": true,
+        "included_in_optimized_combination": true
+      },
+      {
+        "method": "rdrop",
+        "setting": "coefficient 0.5",
+        "reg": {
+          "rdrop": 0.5
+        },
+        "value": 0.5,
+        "mean_dev_accuracy": 0.846829640947288,
+        "mean_dev_loss": 1.023191769983559
+      },
+      {
+        "method": "rdrop",
+        "setting": "coefficient 1",
+        "reg": {
+          "rdrop": 1.0
+        },
+        "value": 1.0,
+        "mean_dev_accuracy": 0.8449197860962567,
+        "mean_dev_loss": 1.0164500065257642
+      }
+    ],
+    "llrd": [
+      {
+        "method": "llrd",
+        "setting": "decay 0.8",
+        "reg": {
+          "llrd": 0.8
+        },
+        "value": 0.8,
+        "mean_dev_accuracy": 0.8537051184110007,
+        "mean_dev_loss": 0.9097101290675912,
+        "mean_paired_gain_pp": 1.1841100076394193,
+        "seeds_better_than_baseline": 5,
+        "included": true,
+        "included_in_optimized_combination": true
+      },
+      {
+        "method": "llrd",
+        "setting": "decay 0.9",
+        "reg": {
+          "llrd": 0.9
+        },
+        "value": 0.9,
+        "mean_dev_accuracy": 0.8491214667685255,
+        "mean_dev_loss": 1.0033737143340742
+      },
+      {
+        "method": "llrd",
+        "setting": "decay 0.95",
+        "reg": {
+          "llrd": 0.95
+        },
+        "value": 0.95,
+        "mean_dev_accuracy": 0.8464476699770817,
+        "mean_dev_loss": 1.0291052652127584
+      }
+    ]
+  }
+}

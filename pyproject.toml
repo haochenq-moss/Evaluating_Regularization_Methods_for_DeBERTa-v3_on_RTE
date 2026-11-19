@@ -18,7 +18,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
-lora = ["peft>=0.18,<1"]
 
 [project.scripts]
 regbench = "regbench.cli:main"

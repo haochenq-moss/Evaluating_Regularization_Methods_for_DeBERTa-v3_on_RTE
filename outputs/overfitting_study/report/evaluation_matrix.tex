@@ -1,0 +1,19 @@
+\begin{table*}[tp]
+\centering\small\setlength{\tabcolsep}{4pt}
+\caption{Final-epoch metrics after 12 epochs, mean $\pm$ sample SD over seven seeds. Training loss is clean evaluation-mode loss. Augmentation training metrics use the augmented training split.}
+\label{tab:evaluation-matrix}
+\begin{tabular}{p{0.27\textwidth}rrrr}
+\toprule
+Method & Train accuracy (\%) & Train loss & Validation accuracy (\%) & Validation loss \\
+\midrule
+Baseline & $99.99 \pm 0.02$ & $0.00 \pm 0.00$ & $84.19 \pm 1.39$ & $1.07 \pm 0.11$ \\
+Filtered augmentation (augmentation=0.5) & $99.99 \pm 0.02$ & $0.00 \pm 0.00$ & $84.00 \pm 0.99$ & $1.17 \pm 0.08$ \\
+Label smoothing (epsilon=0.1) & $100.00 \pm 0.00$ & $0.04 \pm 0.00$ & $84.61 \pm 1.77$ & $0.45 \pm 0.05$ \\
+Mixup (mixup=0.2) & $99.88 \pm 0.16$ & $0.01 \pm 0.00$ & $84.53 \pm 1.09$ & $0.53 \pm 0.08$ \\
+NEFTune (neftune=15) & $99.89 \pm 0.08$ & $0.00 \pm 0.00$ & $84.38 \pm 1.27$ & $1.04 \pm 0.11$ \\
+R-Drop (rdrop=0.1) & $99.99 \pm 0.02$ & $0.00 \pm 0.00$ & $85.22 \pm 0.70$ & $1.00 \pm 0.06$ \\
+LLRD (llrd=0.8) & $99.98 \pm 0.03$ & $0.00 \pm 0.00$ & $85.37 \pm 1.49$ & $0.91 \pm 0.09$ \\
+Optimized Combination & $99.77 \pm 0.17$ & $0.07 \pm 0.01$ & $86.40 \pm 1.54$ & $0.36 \pm 0.02$ \\
+\bottomrule
+\end{tabular}
+\end{table*}

@@ -1,0 +1,37 @@
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Candidate settings after 12 epochs and 7 seeds. Include a method only if its mean paired gain is positive and a majority of seeds beat baseline.}
+\label{tab:selected-hyperparameters}
+\begin{tabular}{p{0.16\textwidth}p{0.13\textwidth}p{0.20\textwidth}rrrp{0.13\textwidth}}
+\toprule
+Method & Candidates & Selected & Dev acc. (\%) & Gain (pp) & Dev loss & Decision \\
+\midrule
+Baseline & -- & -- & 84.19 & -- & 1.068 & -- \\
+Filtered augmentation & 0.25, 0.5, 1 & ratio=0.5 & 84.00 & -0.19 & 1.171 & 3/7; exclude \\
+Label smoothing & 0.05, 0.1, 0.15 & epsilon=0.1 & 84.61 & +0.42 & 0.454 & 4/7; include \\
+Mixup & 0.1, 0.2, 0.4 & alpha=0.2 & 84.53 & +0.34 & 0.525 & 4/7; include \\
+NEFTune & 5, 10, 15 & alpha=15 & 84.38 & +0.19 & 1.042 & 3/7; exclude \\
+R-Drop & 0.1, 0.5, 1 & coefficient=0.1 & 85.22 & +1.03 & 1.005 & 5/7; include \\
+LLRD & 0.8, 0.9, 0.95 & decay=0.8 & 85.37 & +1.18 & 0.910 & 5/7; include \\
+Optimized Combination & Label smoothing, Mixup, R-Drop, LLRD & smoothing=0.1, Mixup=0.2, R-Drop=0.1, LLRD=0.8 & 86.40 & +2.22 & 0.356 & 6/7 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+\begin{table*}[tp]
+\centering\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Final development accuracy (\%) for all 7 seeds after 12 epochs, ranked by Optimized Combination gain. Every seed remains in the analysis.}
+\label{tab:selected-seeds}
+\begin{tabular}{rrrrrrrrrrr}
+\toprule
+Rank & Seed & Baseline & Aug. & Smooth. & Mixup & R-Drop & NEFTune & LLRD & Optimized & Gain (pp) \\
+\midrule
+1 & 456 & 82.35 & 82.89 & 83.69 & 84.49 & 84.76 & 85.29 & 87.43 & 86.90 & +4.55 \\
+2 & 123 & 83.69 & 83.42 & 84.22 & 85.56 & 85.83 & 84.22 & 85.56 & 87.70 & +4.01 \\
+3 & 789 & 83.42 & 84.76 & 82.09 & 83.16 & 85.56 & 83.42 & 83.69 & 86.10 & +2.67 \\
+4 & 1801564980 & 85.29 & 84.22 & 85.29 & 86.10 & 84.22 & 84.76 & 85.29 & 87.43 & +2.14 \\
+5 & 201765793 & 86.63 & 85.56 & 83.42 & 83.69 & 84.49 & 85.03 & 86.90 & 87.97 & +1.34 \\
+6 & 1011 & 83.69 & 84.22 & 87.17 & 83.69 & 85.83 & 85.83 & 85.29 & 84.76 & +1.07 \\
+7 & 1323889826 & 84.22 & 82.89 & 86.36 & 85.03 & 85.83 & 82.09 & 83.42 & 83.96 & -0.27 \\
+\bottomrule
+\end{tabular}
+\end{table*}

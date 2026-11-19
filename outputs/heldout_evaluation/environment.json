@@ -1,0 +1,27 @@
+{
+  "job_id": "55851",
+  "gpu": "NVIDIA A40",
+  "python": "3.12.14",
+  "torch": "2.11.0+cu128",
+  "transformers": "5.22.1",
+  "epochs": 12,
+  "seeds": [
+    123,
+    456,
+    789,
+    1011,
+    201765793,
+    1801564980,
+    1323889826
+  ],
+  "learning_rate": 3e-05,
+  "holdout": "internal_holdout",
+  "holdout_size": 374,
+  "prior_exposure": true,
+  "optimized_parameters": {
+    "label_smoothing": 0.1,
+    "mixup": 0.2,
+    "rdrop": 0.1,
+    "llrd": 0.8
+  }
+}

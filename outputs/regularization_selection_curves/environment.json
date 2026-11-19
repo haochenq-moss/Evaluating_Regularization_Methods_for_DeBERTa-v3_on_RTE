@@ -1,0 +1,145 @@
+{
+  "job_id": "55843",
+  "gpu": "NVIDIA A40",
+  "python": "3.12.14",
+  "torch": "2.11.0+cu128",
+  "transformers": "5.22.1",
+  "epochs": 12,
+  "seeds": [
+    123,
+    456,
+    789,
+    1011,
+    201765793,
+    1801564980,
+    1323889826
+  ],
+  "base_learning_rate": 3e-05,
+  "candidate_settings": {
+    "augmentation": [
+      [
+        {
+          "augmentation": 0.25
+        },
+        "ratio 0.25"
+      ],
+      [
+        {
+          "augmentation": 0.5
+        },
+        "ratio 0.5"
+      ],
+      [
+        {
+          "augmentation": 1.0
+        },
+        "ratio 1"
+      ]
+    ],
+    "label_smoothing": [
+      [
+        {
+          "label_smoothing": 0.05
+        },
+        "epsilon 0.05"
+      ],
+      [
+        {
+          "label_smoothing": 0.1
+        },
+        "epsilon 0.1"
+      ],
+      [
+        {
+          "label_smoothing": 0.15
+        },
+        "epsilon 0.15"
+      ]
+    ],
+    "mixup": [
+      [
+        {
+          "mixup": 0.1
+        },
+        "alpha 0.1"
+      ],
+      [
+        {
+          "mixup": 0.2
+        },
+        "alpha 0.2"
+      ],
+      [
+        {
+          "mixup": 0.4
+        },
+        "alpha 0.4"
+      ]
+    ],
+    "neftune": [
+      [
+        {
+          "neftune": 5.0
+        },
+        "alpha 5"
+      ],
+      [
+        {
+          "neftune": 10.0
+        },
+        "alpha 10"
+      ],
+      [
+        {
+          "neftune": 15.0
+        },
+        "alpha 15"
+      ]
+    ],
+    "rdrop": [
+      [
+        {
+          "rdrop": 0.1
+        },
+        "coefficient 0.1"
+      ],
+      [
+        {
+          "rdrop": 0.5
+        },
+        "coefficient 0.5"
+      ],
+      [
+        {
+          "rdrop": 1.0
+        },
+        "coefficient 1"
+      ]
+    ],
+    "llrd": [
+      [
+        {
+          "llrd": 0.8
+        },
+        "decay 0.8"
+      ],
+      [
+        {
+          "llrd": 0.9
+        },
+        "decay 0.9"
+      ],
+      [
+        {
+          "llrd": 0.95
+        },
+        "decay 0.95"
+      ]
+    ]
+  },
+  "baseline_source": "reuse existing seed metrics; train only new seeds",
+  "reused_augmentation_ratio": 0.5,
+  "reused_rdrop_coefficient": 0.1,
+  "selection_rule": "highest mean final development accuracy; tie lower mean development loss; then lower parameter value",
+  "combination_inclusion_rule": "include only when mean paired development-accuracy gain is positive and at least 4 of 7 seeds beat baseline"
+}

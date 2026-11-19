@@ -8,7 +8,7 @@
 - Label balance: two-stage holdout splitting is stratified by the RTE label.
 - Leakage prevention: identical `(sentence1, sentence2)` pairs are grouped together, including conflicting-label duplicates; no source rows are dropped.
 - Seed: `split_seed` in the YAML configuration (default `13`).
-- The internal 15% holdout is reserved and unused. The official GLUE RTE `validation` split (277 labeled rows) is the final evaluation set, used only after all choices and retraining are complete.
+- The internal 15% holdout is used to compare the frozen baseline and Optimized Combination after selection. It was examined in earlier analyses, so this comparison is exploratory, not an independent test. The official GLUE RTE `validation` split (277 labeled rows) is not used in the current comparison and was also examined previously.
 
 The internal split first holds out the combined validation/holdout fraction, then divides that holdout according to the requested relative sizes. Grouping may slightly change realized percentages; the generated `split_manifest.json` is authoritative.
 
@@ -18,7 +18,7 @@ The prepared internal split (seed 13) has:
 |---|---:|---:|
 | Train | 1,742 | 69.9598% |
 | Validation | 374 | 15.0201% |
-| Test | 374 | 15.0201% |
+| Internal holdout | 374 | 15.0201% |
 
 The final row is named `internal_holdout` in the cache (not `test`) to avoid confusing it with the official final evaluation split. All 2,490 source rows are assigned once; the two duplicate rows remain with their text-pair group.
 
@@ -29,11 +29,11 @@ regbench prepare --config configs/default.yaml
 python -m json.tool data_cache/*/split_manifest.json
 ```
 
-The manifest records source row membership, exact sizes, realized percentages, seed and requested ratios, plus the official validation size and its final-test role. Data is tokenized with the configured model tokenizer, sentence1 first and sentence2 second, and truncated to `max_len`. Original text is retained for augmentation and audit.
+The manifest records source row membership, exact sizes, realized percentages, seed and requested ratios, plus the official validation size. Its legacy final-test designation describes the generic data pipeline, not the current study. Data is tokenized with the configured model tokenizer, sentence1 first and sentence2 second, and truncated to `max_len`. Original text is retained for augmentation and audit.
 
 ## Evaluation boundary
 
-Only internal train rows are augmented. Internal validation is used for tuning, ranking and epoch monitoring. The official validation data is not loaded by training or search; it is loaded for final selected retraining/evaluation only. The internal holdout is not used. Final predictions are saved separately from internal validation predictions.
+Only internal train rows are augmented. Internal validation is used for candidate selection and epoch monitoring. After selection, the study retrains baseline and Optimized Combination on the internal training split and evaluates them on the internal holdout. The held-out evaluator explicitly substitutes this partition for the generic pipeline's official-validation test split.
 
 ## Synthetic data
 

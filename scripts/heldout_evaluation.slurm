@@ -23,5 +23,5 @@ nvidia-smi
 "$python_executable" scripts/run_heldout_evaluation.py
 "$python_executable" scripts/run_regularization_curve_study.py --plots-only
 cd outputs/overfitting_study/report
-../../tools/tectonic --keep-logs combined_report.tex
+"${REGBENCH_TECTONIC:-tectonic}" --keep-logs combined_report.tex
 printf '[heldout-eval] job=%s completed\n' "$SLURM_JOB_ID"

@@ -15,4 +15,4 @@ export MPLBACKEND=Agg
 
 "$python_executable" scripts/run_regularization_curve_study.py --plots-only
 cd outputs/overfitting_study/report
-../../tools/tectonic --keep-logs combined_report.tex
+"${REGBENCH_TECTONIC:-tectonic}" --keep-logs combined_report.tex

@@ -1,0 +1,91 @@
+{
+  "hash": "9b6f99c5b2b0",
+  "spec": {
+    "reg": {
+      "label_smoothing": 0.05
+    },
+    "lr": 3e-05,
+    "seed": 1323889826
+  },
+  "cfg": {
+    "model_name": "microsoft/deberta-v3-base",
+    "dataset_name": "nyu-mll/glue",
+    "dataset_config": "rte",
+    "premise_column": "sentence1",
+    "hypothesis_column": "sentence2",
+    "max_len": 128,
+    "train_fraction": 0.7,
+    "validation_fraction": 0.15,
+    "test_fraction": 0.15,
+    "split_seed": 13,
+    "augmentation_seed": 2718,
+    "augmentation_generator": "google/flan-t5-large",
+    "augmentation_confidence": 0.85,
+    "augmentation_batch_size": 8,
+    "augmentation_max_new_tokens": 96,
+    "augmentation_file": "outputs/augmentation/filtered.jsonl",
+    "train_size": null,
+    "dev_eval_size": null,
+    "lr": 3e-05,
+    "weight_decay": 0.01,
+    "batch_size": 32,
+    "eval_batch_size": 128,
+    "epochs": 12,
+    "warmup_ratio": 0.06,
+    "grad_clip": 1.0,
+    "precision": "auto",
+    "num_workers": 2,
+    "search_seed": 42,
+    "final_seeds": [
+      42,
+      123,
+      456
+    ],
+    "grid": {
+      "lrs": [
+        1e-05,
+        2e-05,
+        3e-05
+      ],
+      "baseline_epochs": [
+        3,
+        4,
+        5
+      ],
+      "augmentation": [
+        0.25,
+        0.5,
+        1.0
+      ],
+      "label_smoothing": [
+        0.05,
+        0.1,
+        0.15
+      ],
+      "mixup": [
+        0.1,
+        0.2,
+        0.4
+      ],
+      "rdrop": [
+        0.5,
+        1.0,
+        4.0
+      ],
+      "neftune": [
+        5.0,
+        10.0,
+        15.0
+      ],
+      "llrd": [
+        0.8,
+        0.9,
+        0.95
+      ]
+    },
+    "save_final_model": false,
+    "test_size": null,
+    "ece_bins": 10
+  },
+  "effective_num_workers": 0
+}

@@ -1,0 +1,12 @@
+{
+  "tuning": "full",
+  "reg": {
+    "rdrop": 0.1
+  },
+  "seed": 1011,
+  "lr": 3e-05,
+  "epochs": 12,
+  "rank": null,
+  "dropout": null,
+  "alpha": null
+}

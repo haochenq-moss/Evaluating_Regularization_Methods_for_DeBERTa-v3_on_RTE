@@ -8,6 +8,15 @@ wheels/
 
 # Virtual environments
 .venv
-outputs/
+outputs/*
+!outputs/augmentation/
+outputs/augmentation/*
+!outputs/augmentation/filtered.jsonl
+!outputs/regularization_selection_curves/
+!outputs/regularization_curve_study/
+!outputs/overfitting_study/
+!outputs/heldout_evaluation/
+outputs/**/*.log
+outputs/**/progress.jsonl
 .pytest_cache/
 data_cache/
